@@ -61,14 +61,14 @@ APP_VERSION = "v02-18"
 # ------------------------------------------------------- #
 type_of_media = parse_cli_arguments("anime", 1) if use_old_parse else get_arg("TYPE", "anime") # choose 'serie' or 'anime'
 name = parse_cli_arguments("Name-Goes-Here", 2) if use_old_parse else get_arg("NAME", "Name-Goes-Here")
-language = parse_cli_arguments("Deutsch", 3) if use_old_parse else get_arg("LANG", "Deutsch")
+language = parse_cli_arguments("Deutsch", 3) if use_old_parse else get_arg("LANG", "Deutsch") # Options: Deutsch, Ger-Sub, English
 dlMode = parse_cli_arguments("Series", 4) if use_old_parse else get_arg("MODE", "Series")  # Options: Movies, Series, All
 season_override = parse_cli_arguments(0, 5) if use_old_parse else get_arg("SEASON", 0)  # 0 = no override. 1 = season 1. etc...
 cliProvider = parse_cli_arguments("VOE", 6) if use_old_parse else get_arg("PROVIDER", "VOE")  # 0 = no override. 1 = season 1. etc...
 episode_override = 0  # 0 = no override. 1 = episode 1. etc...
-ddos_protection_calc = 5
-ddos_wait_timer = 60  # in seconds
-max_download_threads = 5 # This does NOT limit the threads but won't start more when the DDOS Timer starts.
+ddos_protection_calc = 1
+ddos_wait_timer = 300  # in seconds
+max_download_threads = 1 # This does NOT limit the threads but won't start more when the DDOS Timer starts.
 thread_download_wait_timer = 30  # in seconds
 disable_thread_timer = False # If true the script will start downloads as soon as the ddos protection is over.
 output_root = "output"
