@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Download Konfiguration</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">Media Downloader</a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="#">Startseite</a></li>
+                        <li><a href="#">Einstellungen</a></li>
+                        <li><a href="#">Hilfe</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <h1>Download Konfiguration</h1>
+            <p class="description">Konfiguriere deinen Media-Download mit den folgenden Einstellungen.</p>
+            
+            <form id="configForm">
+                <!-- Erste Reihe mit 3 Boxen -->
+                <div class="config-row">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📺 Medien Typ</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="type_of_media">Typ auswählen</label>
+                            <select class="form-control" id="type_of_media" name="type_of_media">
+                                <option value="anime">Anime</option>
+                                <option value="serie">Serie</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Wähle "serie" oder "anime" um die entsprechende Website zum Scrapen auszuwählen.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🌐 Sprache</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="language">Sprache wählen</label>
+                            <select class="form-control" id="language" name="language">
+                                <option value="Deutsch">Deutsch</option>
+                                <option value="Ger-Sub">Ger-Sub (Deutsch mit Untertiteln)</option>
+                                <option value="English">English</option>
+                                <option value="Eng-Sub">Eng-Sub (English mit Untertiteln)</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Gewünschte Sprache der Dateien (z.B. "Deutsch", "Ger-Sub", "English").
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>💾 Download Modus</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="dlMode">Modus auswählen</label>
+                            <select class="form-control" id="dlMode" name="dlMode">
+                                <option value="Series">Series</option>
+                                <option value="Movies">Movies</option>
+                                <option value="All">All</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Inhaltstyp der heruntergeladen werden soll (Movies, Series, All). Standard: Series.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zweite Reihe mit 3 Boxen -->
+                <div class="config-row">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🎬 Staffel Override</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="season_override">Staffel auswählen</label>
+                            <select class="form-control" id="season_override" name="season_override">
+                                <option value="0">Alle Staffeln herunterladen</option>
+                                <option value="1">Nur Staffel 1</option>
+                                <option value="2">Nur Staffel 2</option>
+                                <option value="3">Nur Staffel 3</option>
+                                <option value="4">Nur Staffel 4</option>
+                                <option value="5">Nur Staffel 5</option>
+                                <option value="1+">Staffel 1 und alle folgenden</option>
+                                <option value="2+">Staffel 2 und alle folgenden</option>
+                                <option value="3+">Staffel 3 und alle folgenden</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Spezifiziere welche Staffeln heruntergeladen werden sollen:
+                                <ul>
+                                    <li><code>0</code>: Alle Staffeln</li>
+                                    <li><code>NUM</code>: Nur die angegebene Staffel</li>
+                                    <li><code>NUM+</code>: Diese Staffel und alle folgenden</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🔗 Provider</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cliProvider">Provider auswählen</label>
+                            <select class="form-control" id="cliProvider" name="cliProvider">
+                                <option value="VOE">VOE</option>
+                                <option value="Vidoza">Vidoza</option>
+                                <option value="Streamtape">Streamtape</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Spezifiziere den Content-Provider (z.B. VOE, Streamtape, oder Vidoza).
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🛡️ DDOS Protection</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="ddos_protection_calc">DDOS Protection Level</label>
+                            <select class="form-control" id="ddos_protection_calc" name="ddos_protection_calc">
+                                <option value="1">1 - Niedrig</option>
+                                <option value="3">3 - Mittel</option>
+                                <option value="5" selected>5 - Standard</option>
+                                <option value="7">7 - Hoch</option>
+                                <option value="10">10 - Sehr Hoch</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Anzahl der Episoden die heruntergeladen werden sollen bevor pausiert wird. Standard: 5.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dritte Reihe mit 3 Boxen -->
+                <div class="config-row">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⚡ Download Threads</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="max_download_threads">Maximale Threads</label>
+                            <select class="form-control" id="max_download_threads" name="max_download_threads">
+                                <option value="1">1 Thread</option>
+                                <option value="3">3 Threads</option>
+                                <option value="5" selected>5 Threads</option>
+                                <option value="10">10 Threads</option>
+                                <option value="15">15 Threads</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Maximale Anzahl gleichzeitiger Download-Threads. Begrenzt nicht die Threads direkt, sondern startet keine neuen wenn der DDOS Timer aktiv ist.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⏰ Wartezeiten</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="ddos_wait_timer">DDOS Wartezeit (Sekunden)</label>
+                            <select class="form-control" id="ddos_wait_timer" name="ddos_wait_timer">
+                                <option value="30">30 Sekunden</option>
+                                <option value="60" selected>60 Sekunden</option>
+                                <option value="90">90 Sekunden</option>
+                                <option value="120">120 Sekunden</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Wartezeit (in Sekunden) bevor Downloads nach DDOS Protection fortgesetzt werden. Standard: 60.
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="thread_download_wait_timer">Thread Wartezeit (Sekunden)</label>
+                            <select class="form-control" id="thread_download_wait_timer" name="thread_download_wait_timer">
+                                <option value="15">15 Sekunden</option>
+                                <option value="30" selected>30 Sekunden</option>
+                                <option value="45">45 Sekunden</option>
+                                <option value="60">60 Sekunden</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Wartezeit zwischen Thread-Starts. Standard: 30.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⚙️ Erweiterte Einstellungen</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="disable_thread_timer">Thread Timer deaktivieren</label>
+                            <select class="form-control" id="disable_thread_timer" name="disable_thread_timer">
+                                <option value="false">Nein</option>
+                                <option value="true">Ja</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Wenn aktiviert, startet das Skript Downloads sofort nachdem der DDOS Protection vorbei ist.
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="episode_override">Episode Override</label>
+                            <select class="form-control" id="episode_override" name="episode_override">
+                                <option value="0">Alle Episoden</option>
+                                <option value="1">Ab Episode 1</option>
+                                <option value="2">Ab Episode 2</option>
+                                <option value="3">Ab Episode 3</option>
+                                <option value="4">Ab Episode 4</option>
+                                <option value="5">Ab Episode 5</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Spezifiziere die Start-Episode für manuelle Downloads. <code>0</code> für alle Episoden.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vierte Reihe für Name und Provider Priority -->
+                <div class="config-row">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📝 Media Name</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="name">Name eingeben</label>
+                            <input type="text" class="form-control" id="name" name="name" value="Name-Goes-Here" placeholder="Name der Serie/des Films">
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Der Name des Anime oder der Serie, formatiert als <code>word-word-word</code>. 
+                                <br><strong>Beispiel:</strong> "one-piece" statt "One Piece"
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🏆 Provider Priorität</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reihenfolge der Provider (drag & drop)</label>
+                            <ul id="providerPriority" class="priority-list">
+                                <li data-value="VOE">VOE</li>
+                                <li data-value="Vidoza">Vidoza</li>
+                                <li data-value="Streamtape">Streamtape</li>
+                            </ul>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Prioritätsreihenfolge der Provider. Obenstehende Provider werden zuerst versucht.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>ℹ️ Info</h3>
+                        </div>
+                        <div class="info-box">
+                            <h4>Manueller Download</h4>
+                            <p>Bei Fehlern oder für spezifische Episoden, verwende das <code>Manual_download.py</code> Skript:</p>
+                            <ol>
+                                <li>Editiere <code>src/constants.py</code> und setze <code>episode_override</code></li>
+                                <li>Führe das Skript aus:
+                                    <pre>python Manual_download.py --type &lt;TYPE&gt; --name &lt;NAME&gt; --lang &lt;LANGUAGE&gt; --season-override &lt;SeasonOverride&gt;</pre>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Start Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn" id="startButton">🚀 Download Starten</button>
+                </div>
+            </form>
+
+            <!-- Ergebnisse Bereich -->
+            <div class="card mt-4" id="results" style="display: none;">
+                <div class="card-header">
+                    <h3>📋 Konfigurationsdaten</h3>
+                </div>
+                <pre id="configOutput" class="config-output"></pre>
+                <div class="help-text">
+                    <strong>Diese Daten werden an dein Skript gesendet:</strong>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2024 Media Downloader. Alle Rechte vorbehalten.</p>
+                <ul class="footer-links">
+                    <li><a href="#">Datenschutz</a></li>
+                    <li><a href="#">Impressum</a></li>
+                    <li><a href="#">Kontakt</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Drag & Drop für Provider Priority
+        const priorityList = document.getElementById('providerPriority');
+        
+        // Einfache Drag & Drop Implementierung
+        priorityList.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', e.target.textContent);
+            e.target.classList.add('dragging');
+        });
+
+        priorityList.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+        });
+
+        priorityList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingItem = document.querySelector('.dragging');
+            const siblings = [...priorityList.querySelectorAll('li:not(.dragging)')];
+            const nextSibling = siblings.find(sibling => {
+                return e.clientY <= sibling.getBoundingClientRect().top + sibling.offsetHeight / 2;
+            });
+            priorityList.insertBefore(draggingItem, nextSibling);
+        });
+
+        // Form Submit Handler
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Formulardaten sammeln
+            const formData = new FormData(this);
+            const config = {};
+            
+            // Standardwerte aus Formular
+            for (let [key, value] of formData.entries()) {
+                // Typkonvertierung für numerische Werte und Booleans
+                if (key === 'season_override' || key === 'episode_override' || 
+                    key === 'ddos_protection_calc' || key === 'max_download_threads' ||
+                    key === 'ddos_wait_timer' || key === 'thread_download_wait_timer') {
+                    config[key] = value.includes('+') ? value : parseInt(value);
+                } else if (key === 'disable_thread_timer') {
+                    config[key] = value === 'true';
+                } else {
+                    config[key] = value;
+                }
+            }
+            
+            // Provider Priority aus der Liste lesen
+            const providerItems = priorityList.querySelectorAll('li');
+            config.provider_priority = Array.from(providerItems).map(item => item.getAttribute('data-value'));
+            
+            // Ergebnisse anzeigen
+            const resultsDiv = document.getElementById('results');
+            const outputPre = document.getElementById('configOutput');
+            
+            outputPre.textContent = JSON.stringify(config, null, 2);
+            resultsDiv.style.display = 'block';
+            
+            // Hier könntest du die Daten an dein Skript senden
+            console.log('Konfiguration:', config);
+            
+            // Beispiel: Daten an Server senden
+             fetch('/start-download', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                 },
+                 body: JSON.stringify(config)
+             });
+            
+            alert('Download gestartet mit den ausgewählten Einstellungen!');
+        });
+
+        // Season Override mit + Optionen
+        const seasonSelect = document.getElementById('season_override');
+        // Stellen Sie sicher, dass die + Optionen vorhanden sind
+    </script>
+</body>
+</html>
