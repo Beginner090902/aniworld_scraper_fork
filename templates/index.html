@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Download Konfiguration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">Media Downloader</a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="#">Einstellungen</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <h1>Download Konfiguration</h1>
+            <p class="description">Konfiguriere deinen Media-Download mit den folgenden Einstellungen.</p>
+            
+            <form method="POST" action="{{ url_for('index') }}">
+                <!-- Erste Reihe mit 3 Boxen -->
+                <div class="config-row">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📺 Medien Typ</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="type_of_media">Typ auswählen</label>
+                            <select class="form-control" id="type_of_media" name="type_of_media">
+                                <option value="anime">Anime</option>
+                                <option value="serie">Serie</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Wähle "serie" oder "anime" um die entsprechende Website zum Scrapen auszuwählen.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🌐 Sprache</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="language">Sprache wählen</label>
+                            <select class="form-control" id="language" name="language">
+                                <option value="Deutsch">Deutsch</option>
+                                <option value="Ger-Sub">Ger-Sub (Deutsch mit Untertiteln)</option>
+                                <option value="English">English</option>
+                                <option value="Eng-Sub">Eng-Sub (English mit Untertiteln)</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Gewünschte Sprache der Dateien (z.B. "Deutsch", "Ger-Sub", "English").
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>💾 Download Modus</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="dlMode">Modus auswählen</label>
+                            <select class="form-control" id="dlMode" name="dlMode">
+                                <option value="Series">Series</option>
+                                <option value="Movies">Movies</option>
+                                <option value="All">All</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Inhaltstyp der heruntergeladen werden soll (Movies, Series, All). Standard: Series.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zweite Reihe mit 3 Boxen -->
+                <div class="config-row">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🔗 Provider</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cliProvider">Provider auswählen</label>
+                            <select class="form-control" id="cliProvider" name="cliProvider">
+                                <option value="VOE">VOE</option>
+                                <option value="Vidoza">Vidoza</option>
+                                <option value="Streamtape">Streamtape</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Spezifiziere den Content-Provider (z.B. VOE, Streamtape, oder Vidoza).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vierte Reihe für Name und Provider Priority -->
+                <div class="config-row">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📝 Media Name</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="name">Name eingeben</label>
+                            <input type="text" class="form-control" id="name" name="name" value="Name-Goes-Here" placeholder="Name der Serie/des Films">
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Der Name des Anime oder der Serie, formatiert als <code>word-word-word</code>. 
+                                <br><strong>Beispiel:</strong> "one-piece" statt "One Piece"
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>ℹ️ Info</h3>
+                        </div>
+                        <div class="info-box">
+                            <h4>Manueller Download</h4>
+                            <p>Bei Fehlern oder für spezifische Episoden, verwende das <code>Manual_download.py</code> Skript:</p>
+                            <ol>
+                                <li>Editiere <code>src/constants.py</code> und setze <code>episode_override</code></li>
+                                <li>Führe das Skript aus:
+                                    <pre>python Manual_download.py --type &lt;TYPE&gt; --name &lt;NAME&gt; --lang &lt;LANGUAGE&gt; --season-override &lt;SeasonOverride&gt;</pre>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Start Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn" id="startButton">🚀 Download Starten</button>
+                </div>
+            </form>
+
+            <!-- Ergebnisse Bereich -->
+            <div class="card mt-4" id="results" style="display: none;">
+                <div class="card-header">
+                    <h3>📋 Konfigurationsdaten</h3>
+                </div>
+                <pre id="configOutput" class="config-output"></pre>
+                <div class="help-text">
+                    <strong>Diese Daten werden an dein Skript gesendet:</strong>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2024 Media Downloader. Alle Rechte vorbehalten.</p>
+                <ul class="footer-links">
+                    <li><a href="#">Datenschutz</a></li>
+                    <li><a href="#">Impressum</a></li>
+                    <li><a href="#">Kontakt</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
