@@ -202,4 +202,4 @@ def log_stream():
 
 if __name__ == '__main__':
     # Debug-ReLoader stört SSE manchmal (doppelte Prozesse), deshalb debug=False oder use_reloader=False
-    app.run(host='127.0.0.1', port=5000, threaded=True, debug=False)
+    socketio.run(host='127.0.0.1', port=5000, threaded=True, debug=False)

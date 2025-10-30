@@ -170,7 +170,7 @@
                 </div>
             </form>
 
-            <button type="button" class="btn" id="StopButton">🛑 Download Stoppen</button> 
+            <button type="button" class="btn" id="StopButton">🛑 Download Stoppen</button>
 
             <!-- Ergebnisse Bereich -->
             <div class="card mt-4" id="results" style="display: none;">
@@ -199,7 +199,21 @@
             </div>
         </div>
     </footer>
-    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // dein JS hier (oder in externer Datei nach dem Laden)
+        const logWindow = document.getElementById('logWindow');
+        const socket = io();
+
+        socket.on('log_output', (data) => {
+            const el = document.createElement('div');
+            el.classList.add('logline', data.level.toLowerCase());
+            el.textContent = data.data;
+            logWindow.appendChild(el);
+            logWindow.scrollTop = logWindow.scrollHeight;
+        });
+    </script>
+
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 

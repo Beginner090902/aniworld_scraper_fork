@@ -1,10 +1,13 @@
+# src/custom_logging.py
 import logging
 import os
+import re
 from flask_socketio import SocketIO
 
-# Flask SocketIO initialisieren
-socketio = None
+# SocketIO wird beim Init gesetzt
+socketio: SocketIO | None = None
 
+# Eigene Log-Level
 LOADING = 24
 SUCCESS = 25
 logging.addLevelName(LOADING, "LOADING")
@@ -14,9 +17,11 @@ logging.addLevelName(SUCCESS, "SUCCESS")
 if not os.path.exists("logs"):
     os.mkdir("logs")
 
+
 def loading(self, message, *args, **kwargs):
     if self.isEnabledFor(LOADING):
         self._log(LOADING, message, args, **kwargs)
+
 
 def success(self, message, *args, **kwargs):
     if self.isEnabledFor(SUCCESS):
@@ -26,77 +31,124 @@ def success(self, message, *args, **kwargs):
 logging.Logger.loading = loading
 logging.Logger.success = success
 
-logging.basicConfig(level=logging.INFO)
+# Regex zum Entfernen von ANSI-Escape-Sequenzen
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*m')
 
 
-class CustomFormatter(logging.Formatter):
+def strip_ansi(s: str) -> str:
+    """Entferne ANSI-Farbcodes aus einem String."""
+    if not isinstance(s, str):
+        return s
+    return _ANSI_RE.sub('', s)
+
+
+#
+# Formatters
+#
+class ColoredFormatter(logging.Formatter):
+    """
+    Formatter mit ANSI-Farben für die Konsole.
+    """
     green = "\033[1;92m"
     yellow = "\033[1;93m"
     red = "\033[1;31m"
     purple = "\033[1;35m"
     blue = "\033[1;94m"
     reset = "\033[0m"
-    format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s "
+    fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 
     FORMATS = {
-        logging.DEBUG: blue + format + reset,
-        logging.INFO: blue + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: red + format + reset,
-        LOADING: purple + format + reset,
-        SUCCESS: green + format + reset,
+        logging.DEBUG: blue + fmt + reset,
+        logging.INFO: blue + fmt + reset,
+        logging.WARNING: yellow + fmt + reset,
+        logging.ERROR: red + fmt + reset,
+        logging.CRITICAL: red + fmt + reset,
+        LOADING: purple + fmt + reset,
+        SUCCESS: green + fmt + reset,
     }
 
-    def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
+    def format(self, record: logging.LogRecord) -> str:
+        log_fmt = self.FORMATS.get(record.levelno, self.fmt)
         formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
         return formatter.format(record)
 
 
+class PlainFormatter(logging.Formatter):
+    """
+    Plain formatter ohne ANSI-Codes (für WebSocket/SSE-Ausgabe).
+    """
+    fmt = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+
+    def __init__(self):
+        super().__init__(self.fmt, datefmt="%Y-%m-%d %H:%M:%S")
+
+    def format(self, record: logging.LogRecord) -> str:
+        # Verwende gewöhnliche Formatierung (ohne Farben)
+        return super().format(record)
 
 
-def init_logger_socketio(app_socketio):
-    """SocketIO für Logger initialisieren"""
+#
+# WebSocket-Handler
+#
+def init_logger_socketio(app_socketio: SocketIO):
+    """SocketIO für Logger initialisieren (call this from your app)."""
     global socketio
     socketio = app_socketio
 
+
 class WebSocketHandler(logging.Handler):
-    """Custom Log Handler der Logs via WebSocket sendet"""
-    
-    def emit(self, record):
+    """Custom Log Handler der Logs via WebSocket sendet (plain text, no ANSI)."""
+
+    def emit(self, record: logging.LogRecord) -> None:
         try:
             if socketio:
-                log_entry = self.format(record)
+                # Formatiere die Nachricht (plain, ohne ANSI) - wir benutzen PlainFormatter
+                msg = self.format(record)
+                # Stelle sicher, dass keine ANSI Codes in payload sind
+                payload_text = strip_ansi(msg)
+                # Sende strukturierte Daten: text + level
                 socketio.emit('log_output', {
-                    'data': log_entry,
+                    'data': payload_text,
                     'level': record.levelname,
-                    'source': 'py_main',
+                    'source': record.name,
                     'timestamp': record.created
                 })
         except Exception:
-            pass  # Fallback falls WebSocket nicht verfügbar
+            # Fehler im Logging dürfen die App nicht crashen
+            self.handleError(record)
 
-class CustomFormatter(logging.Formatter):
-    """Dein bestehender Formatter"""
-    def format(self, record):
-        # Deine bestehende Format-Logik
-        return super().format(record)
 
-def setup_logger(name: str) -> logging.Logger:
+#
+# Logger-Setup-Funktion
+#
+def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+    """
+    Erzeuge/konfiguriere einen Logger mit:
+     - ConsoleHandler (farbig)
+     - WebSocketHandler (plain)
+    """
     logger = logging.getLogger(name)
-    logger.propagate = False
-    
-    # Console Handler (dein bestehender)
+    logger.setLevel(level)
+    # Vermeide doppelte Handler wenn mehrmals setup_logger aufgerufen wird
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    # Console (mit Farben)
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(CustomFormatter())
-    
-    # WebSocket Handler (neu)
+    console_handler.setLevel(level)
+    console_handler.setFormatter(ColoredFormatter())
+
+    # WebSocket (ohne Farben)
     websocket_handler = WebSocketHandler()
-    websocket_handler.setFormatter(CustomFormatter())
-    
-    # Beide Handler hinzufügen
+    websocket_handler.setLevel(level)
+    websocket_handler.setFormatter(PlainFormatter())
+
     logger.addHandler(console_handler)
     logger.addHandler(websocket_handler)
-    
+
+    # Optional: file handler etc. hier hinzufügen
+
+    # Verhindern, dass Log-Nachrichten noch weiter an root-Logger gehen
+    logger.propagate = False
+
     return logger
