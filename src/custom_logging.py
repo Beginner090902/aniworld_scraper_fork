@@ -1,5 +1,9 @@
 import logging
 import os
+from flask_socketio import SocketIO
+
+# Flask SocketIO initialisieren
+socketio = None
 
 LOADING = 24
 SUCCESS = 25
@@ -50,12 +54,49 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
+
+
+def init_logger_socketio(app_socketio):
+    """SocketIO für Logger initialisieren"""
+    global socketio
+    socketio = app_socketio
+
+class WebSocketHandler(logging.Handler):
+    """Custom Log Handler der Logs via WebSocket sendet"""
+    
+    def emit(self, record):
+        try:
+            if socketio:
+                log_entry = self.format(record)
+                socketio.emit('log_output', {
+                    'data': log_entry,
+                    'level': record.levelname,
+                    'source': 'py_main',
+                    'timestamp': record.created
+                })
+        except Exception:
+            pass  # Fallback falls WebSocket nicht verfügbar
+
+class CustomFormatter(logging.Formatter):
+    """Dein bestehender Formatter"""
+    def format(self, record):
+        # Deine bestehende Format-Logik
+        return super().format(record)
+
 def setup_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
-    # Prevent passing events to the handlers of higher severity
     logger.propagate = False
-    # Set formatter for the logger.
-    handler = logging.StreamHandler()
-    handler.setFormatter(CustomFormatter())
-    logger.addHandler(handler)
+    
+    # Console Handler (dein bestehender)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(CustomFormatter())
+    
+    # WebSocket Handler (neu)
+    websocket_handler = WebSocketHandler()
+    websocket_handler.setFormatter(CustomFormatter())
+    
+    # Beide Handler hinzufügen
+    logger.addHandler(console_handler)
+    logger.addHandler(websocket_handler)
+    
     return logger
