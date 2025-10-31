@@ -170,7 +170,7 @@
                 </div>
             </form>
 
-            <button type="button" class="btn" id="StopButton">🛑 Download Stoppen</button>
+            <button type="button" class="btn" id="stopBtn">🛑 Download Stoppen</button>
 
             <!-- Ergebnisse Bereich -->
             <div class="card mt-4" id="results" style="display: none;">
@@ -199,20 +199,71 @@
             </div>
         </div>
     </footer>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
-        // dein JS hier (oder in externer Datei nach dem Laden)
-        const logWindow = document.getElementById('logWindow');
-        const socket = io();
+        document.addEventListener('DOMContentLoaded', () => {
+            const logWindow = document.getElementById('logWindow');
+            if (!logWindow) {
+                console.error('logWindow element not found. Prüfe, ob das Element im HTML vorhanden ist.');
+                return;
+            }
 
-        socket.on('log_output', (data) => {
-            const el = document.createElement('div');
-            el.classList.add('logline', data.level.toLowerCase());
-            el.textContent = data.data;
-            logWindow.appendChild(el);
-            logWindow.scrollTop = logWindow.scrollHeight;
+            if (typeof io === 'undefined') {
+                console.error('socket.io client library not loaded. /socket.io/socket.io.js nicht erreichbar?');
+                return;
+            }
+
+            // Falls dein Socket.IO-Server auf anderem Origin/Port läuft, gib die URL an:
+            // const socket = io("http://127.0.0.1:5000");
+            const socket = io();
+
+            socket.on('connect', () => {
+                console.log('Socket.IO connected (id):', socket.id);
+            });
+
+            socket.on('disconnect', reason => {
+                console.warn('Socket.IO disconnected:', reason);
+            });
+
+            socket.on('connect_error', err => {
+                console.error('Socket.IO connect_error:', err);
+            });
+
+            socket.on('log_output', (data) => {
+                try {
+                    // 🔹 Falls der Server JSON als String schickt → parsen
+                    if (typeof data === 'string') {
+                        try {
+                            data = JSON.parse(data);
+                        } catch {
+                            data = { text: data, level: 'info' };
+                        }
+                    }
+
+                    // 🔹 Sicherstellen, dass Felder korrekt gelesen werden
+                    const text = data.text || data.data || '';
+                    const level = (data.level || 'info').toLowerCase();
+
+                    // 🔹 Element für die Logzeile erzeugen
+                    const el = document.createElement('div');
+                    el.className = `logline ${level}`;
+
+                    // 🔹 Text mit Zeilenumbrüchen anzeigen
+                    el.textContent = text;
+                    el.style.whiteSpace = 'pre-wrap';
+
+                    // 🔹 Hinzufügen und automatisch scrollen
+                    logWindow.appendChild(el);
+                    logWindow.scrollTop = logWindow.scrollHeight;
+
+                } catch (e) {
+                    console.error('⚠️ Fehler beim Verarbeiten eines log_output-Events:', e, data);
+                }
+            });
+
         });
     </script>
+
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

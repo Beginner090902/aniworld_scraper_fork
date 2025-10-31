@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, render_template, make_response, Response, stream_with_context
+from flask import Flask, request, jsonify, render_template, make_response, Response, stream_with_context, redirect, url_for, flash
 import subprocess
 import threading
 import os
 import re
+import signal
 import time
 from flask_socketio import SocketIO, emit
 import logging
@@ -11,6 +12,7 @@ from src.custom_logging import init_logger_socketio, setup_logger
 import queue  # neu: für SSE-subscriber Queues
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-for-local')  # für Produktion: echte geheime Variable
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Logger mit WebSocket initialisieren
@@ -38,15 +40,40 @@ def unsubscribe(q):
         except ValueError:
             pass
 
-def broadcast_log(msg):
-    """Schicke msg an alle aktiven Subscriber (non-blocking)."""
+_LEVEL_RE = re.compile(r'\b(DEBUG|INFO|WARNING|ERROR|CRITICAL|LOADING|SUCCESS)\b', re.IGNORECASE)
+
+def broadcast_log(msg, level=None):
+    """Schicke msg an alle aktiven Subscriber; splitte bei neuen Zeilen und ermittle Level.
+       level: optionaler Default-Level (z.B. 'INFO')
+    """
+    if msg is None:
+        return
+
+    # Falls bytes -> decode
+    if isinstance(msg, bytes):
+        try:
+            msg = msg.decode('utf-8', errors='replace')
+        except Exception:
+            msg = str(msg)
+
+    # splitte in einzelne physische Zeilen
+    lines = msg.splitlines() or ['']
+
     with _sub_lock:
         for q in list(_subscribers):
-            try:
-                q.put_nowait(msg)
-            except queue.Full:
-                # falls Queue voll ist -> überspringen (oder evtl. älteste verworfen)
-                pass
+            for line in lines:
+                # versuche Level in der Zeile zu finden
+                found = _LEVEL_RE.search(line)
+                if found:
+                    detected_level = found.group(1).upper()
+                else:
+                    detected_level = (level.upper() if isinstance(level, str) else None) or 'INFO'
+
+                try:
+                    # wir speichern tuple (text, level) - clientseitig erwarten wir plain text,level
+                    q.put_nowait((line, detected_level))
+                except queue.Full:
+                    pass
 
 # ----------------------------------------------------
 
@@ -104,8 +131,12 @@ def validate_and_sanitize_form(form):
     }
 
 
+# globales Tracking
+current_process = None
+current_process_lock = threading.Lock()
+
 def run_download_script(sanitized_data):
-    """Startet das Download-Skript mit validated/sanitized arguments und broadcastet live Logs."""
+    global current_process
     try:
         cmd = [
             'python3', 'py_main.py',
@@ -117,26 +148,39 @@ def run_download_script(sanitized_data):
         ]
 
         logger.info(f"🔧 Starte Download: {' '.join(cmd)}")
+        broadcast_log(f"🔧 Starte Download: {' '.join(cmd)}")
 
-        process = subprocess.Popen(
-            cmd,
+        # Plattform-spezifische Optionen: neue Prozessgruppe erstellen
+        popen_kwargs = dict(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True,           # liefert str statt bytes
+            text=True,
             bufsize=1,
             universal_newlines=True
         )
+        if os.name == 'nt':
+            # Windows
+            popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            # Unix (start new session => eigene PGID)
+            popen_kwargs['start_new_session'] = True
 
-        # Live-Output lesen und als Log senden (und an SSE-Clients broadcasten)
+        process = subprocess.Popen(cmd, **popen_kwargs)
+
+        # setze globalen current_process (thread-sicher)
+        with current_process_lock:
+            current_process = process
+
+        # Live-Output lesen
         for line in iter(process.stdout.readline, ''):
             if line is None:
                 break
             text = line.rstrip('\n')
             if text.strip():
                 logger.info(f"[PY_MAIN] {text}")
-                broadcast_log(text)   # <-- hier wird die gelesene Zeile an alle SSE-Clients geschickt
+                broadcast_log(text, level='INFO')
 
-        # Auf Prozess-Ende warten
+        # warten
         returncode = process.wait()
 
         if returncode == 0:
@@ -144,11 +188,22 @@ def run_download_script(sanitized_data):
             broadcast_log("✅ Download erfolgreich abgeschlossen")
         else:
             logger.error(f"❌ Download mit Fehlercode {returncode} beendet")
-            broadcast_log(f"❌ Download mit Fehlercode {returncode} beendet")
+            broadcast_log(f"❌ Download mit Fehlercode {returncode} beendet", level='ERROR')
+
 
     except Exception as e:
         logger.error(f"❌ Fehler beim Download: {str(e)}")
         broadcast_log(f"❌ Fehler beim Download: {str(e)}")
+
+    finally:
+        # clear current process
+        with current_process_lock:
+            # falls process wurde ersetzt/ausserhalb verändert, nur clear wenn identisch
+            try:
+                if current_process is process:
+                    current_process = None
+            except NameError:
+                current_process = None
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -165,41 +220,112 @@ def index():
             sanitized = validate_and_sanitize_form(request.form)
         except ValueError as e:
             print(f"❌ Formular Validierungsfehler: {e}")
-            return render_template('index.html', message="Ungültige Eingabe. Bitte überprüfen Sie Ihre Daten.")
+            flash("Ungültige Eingabe. Bitte überprüfen Sie Ihre Daten.", "error")
+            return redirect(url_for('index'))
 
-        thread = threading.Thread(target=run_download_script, args=(sanitized,))
-        thread.daemon = True
-        thread.start()
+        # Hintergrund-Task mit socketio starten (robuster als threading.Thread)
+        socketio.start_background_task(run_download_script, sanitized)
 
-        return render_template('index.html', message="Download gestartet!")
+        flash("Download gestartet!", "success")
+        # Redirect auf die GET-Version der Index-Seite (PRG)
+        return redirect(url_for('index'))
+
 
 
 @app.route('/log_stream')
 def log_stream():
-    """
-    SSE-Endpunkt: bei jeder Verbindung bekommt der Client seine eigene Queue.
-    Server schreibt in diese Queues via broadcast_log(...)
-    """
     client_q = subscribe()
 
     def generate():
         try:
-            # blockiert, bis neue Nachricht in client_q ist
             while True:
-                msg = client_q.get()
-                # SSE-Format: data: <text>\n\n
-                yield f"data: {msg}\n\n"
+                item = client_q.get()
+                if item is None:
+                    break
+                # item ist (line, level)
+                if isinstance(item, tuple) and len(item) == 2:
+                    text, lvl = item
+                else:
+                    text, lvl = str(item), 'INFO'
+                payload = json.dumps({'text': text, 'level': lvl})
+                yield f"data: {payload}\n\n"
         except GeneratorExit:
-            # Client hat sich getrennt (oder andere Abbruchgründe)
             pass
         finally:
-            # wichtig: aufräumen
             unsubscribe(client_q)
 
     headers = {"Cache-Control": "no-cache"}
     return Response(stream_with_context(generate()), mimetype='text/event-stream', headers=headers)
 
+@app.route('/stop', methods=['POST'])
+def stop_current_process():
+    """Versucht das aktuell laufende Programm zu stoppen."""
+    global current_process
+    with current_process_lock:
+        p = current_process
+
+    if p is None or p.poll() is not None:
+        # kein laufender Prozess
+        return jsonify({'status': 'no_process', 'message': 'Kein laufender Prozess'}), 400
+
+    try:
+        broadcast_log("⏹ Stop-Anfrage erhalten. Stoppe Prozess...")
+        logger.info("Stop-Anfrage erhalten. Stoppe Prozess...")
+
+        # Versuche sauberes Signal
+        if os.name == 'nt':
+            try:
+                # send CTRL_BREAK to the process group (works when created with CREATE_NEW_PROCESS_GROUP)
+                p.send_signal(signal.CTRL_BREAK_EVENT)
+            except Exception:
+                try:
+                    p.terminate()
+                except Exception:
+                    pass
+        else:
+            try:
+                # send SIGINT to process group
+                os.killpg(os.getpgid(p.pid), signal.SIGINT)
+            except Exception:
+                try:
+                    p.terminate()
+                except Exception:
+                    pass
+
+        # Warte kurz auf beendigung
+        try:
+            p.wait(timeout=5)
+        except Exception:
+            # falls noch alive -> kill
+            try:
+                p.kill()
+            except Exception:
+                pass
+            try:
+                p.wait(timeout=2)
+            except Exception:
+                pass
+
+        broadcast_log("⏹ Prozess gestoppt")
+        logger.info("Prozess gestoppt")
+
+        # sicherheitshalber clearen
+        with current_process_lock:
+            if current_process is p:
+                current_process = None
+
+        return jsonify({'status': 'stopped', 'message': 'Prozess gestoppt'}), 200
+
+    except Exception as e:
+        logger.exception("Fehler beim Stoppen des Prozesses")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+@socketio.on('connect')
+def on_connect():
+    print("Client connected", request.sid)
+    socketio.emit('log_output', {'data': '🔥 Test: Verbindung erfolgreich', 'level': 'INFO'})
+
 
 if __name__ == '__main__':
-    # Debug-ReLoader stört SSE manchmal (doppelte Prozesse), deshalb debug=False oder use_reloader=False
-    socketio.run(host='127.0.0.1', port=5000, threaded=True, debug=False)
+    socketio.run(app, host='127.0.0.1', port=5000, debug=False)
+

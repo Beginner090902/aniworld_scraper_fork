@@ -1,8 +1,7 @@
-  .logline { font-family: monospace; white-space: pre-wrap; padding: 0.15rem; }
-  .debug { color: #5DADE2; }    /* blau */
-  .info { color: #3498DB; }     /* blau-ish */
-  .warning { color: #F39C12; }  /* gelb */
-  .error { color: #E74C3C; }    /* rot */
-  .critical { color: #C0392B; } /* dunkelrot */
-  .loading { color: #9B59B6; }   /* lila */
-  .success { color: #2ECC71; }   /* grün */
+.logline.info { color: #3498db; }
+.logline.debug { color: #5DADE2; }
+.logline.warning { color: #F39C12; }
+.logline.error { color: #E74C3C; }      /* rot */
+.logline.critical { color: #C0392B; }
+.logline.loading { color: #9B59B6; }
+.logline.success { color: #2ECC71; }

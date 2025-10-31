@@ -63,7 +63,7 @@ APP_VERSION = "v02-18"
 #                   global variables
 # ------------------------------------------------------- #
 type_of_media = parse_cli_arguments("anime", 1) if use_old_parse else get_arg("TYPE", "anime") # choose 'serie' or 'anime'
-name = parse_cli_arguments("shangri-la-frontier", 2) if use_old_parse else get_arg("NAME", "shangri-la-frontier")
+name = parse_cli_arguments("Name-Goes-Here", 2) if use_old_parse else get_arg("NAME", "Name-Goes-Here")
 language = parse_cli_arguments("Deutsch", 3) if use_old_parse else get_arg("LANG", "Deutsch") # Options: Deutsch, Ger-Sub, English
 dlMode = parse_cli_arguments("Series", 4) if use_old_parse else get_arg("MODE", "Series")  # Options: Movies, Series, All
 season_override = parse_cli_arguments(2, 5) if use_old_parse else get_arg("SEASON", 0)  # 0 = no override. 1 = season 1. etc...

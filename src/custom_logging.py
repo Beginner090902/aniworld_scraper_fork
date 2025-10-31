@@ -96,27 +96,63 @@ def init_logger_socketio(app_socketio: SocketIO):
     socketio = app_socketio
 
 
+# Regex: erkennt Log-Level Wörter
+_LEVEL_RE = re.compile(r'\b(DEBUG|INFO|WARNING|ERROR|CRITICAL|LOADING|SUCCESS)\b', re.IGNORECASE)
+# Regex: erkennt typische Beginn eines Log-Eintrags mit Datum "YYYY-MM-DD "
+_TIMESTAMP_SPLIT_RE = re.compile(r'(?=\d{4}-\d{2}-\d{2}\s)')
+
 class WebSocketHandler(logging.Handler):
-    """Custom Log Handler der Logs via WebSocket sendet (plain text, no ANSI)."""
+    """Custom Log Handler der Logs via WebSocket sendet (plain text, no ANSI).
+       Splittet zusammengesetzte Nachrichten in einzelne Einträge und sendet für jede Zeile
+       das erkannte Log-Level mit.
+    """
 
     def emit(self, record: logging.LogRecord) -> None:
         try:
-            if socketio:
-                # Formatiere die Nachricht (plain, ohne ANSI) - wir benutzen PlainFormatter
-                msg = self.format(record)
-                # Stelle sicher, dass keine ANSI Codes in payload sind
-                payload_text = strip_ansi(msg)
-                # Sende strukturierte Daten: text + level
-                socketio.emit('log_output', {
-                    'data': payload_text,
-                    'level': record.levelname,
-                    'source': record.name,
-                    'timestamp': record.created
-                })
-        except Exception:
-            # Fehler im Logging dürfen die App nicht crashen
-            self.handleError(record)
+            if not socketio:
+                return
 
+            # Formatiere die Nachricht (plain, ohne ANSI)
+            msg = self.format(record)
+            payload_text = strip_ansi(msg)  # du hattest diese Funktion bereits
+
+            source = record.name
+            ts = record.created
+
+            # 1) Splitte nach erkannten Zeitstempel-Beginn (falls vorhanden)
+            parts = _TIMESTAMP_SPLIT_RE.split(payload_text)
+            # Falls hier eine leere erste part kann auftreten, filtere leere strings
+            parts = [p for p in (p.strip() for p in parts) if p]
+
+            # Falls das Split kein Ergebnis liefert (kein Timestamp-Format), treat as single entry
+            if not parts:
+                parts = [payload_text]
+
+            # 2) Für jede Teilnachricht: Level erkennen, ansonsten fallback auf record.levelname
+            for part in parts:
+                # Suche erstes Level-Wort in der Zeile
+                m = _LEVEL_RE.search(part)
+                if m:
+                    detected_level = m.group(1).upper()
+                else:
+                    # fallback: nutze das Level des logging-records (z.B. INFO)
+                    detected_level = record.levelname.upper() if record.levelname else 'INFO'
+
+                # Trim und sichere Länge (optional)
+                text = part.rstrip('\n')
+
+                # 3) Emit an Clients (ohne broadcast-Keyword — Socket.IO broadcastet an alle wenn kein to/room)
+                socketio.emit('log_output', {
+                    'text': text,
+                    'level': detected_level,
+                    'source': source,
+                    'timestamp': ts
+                })
+
+        except Exception as e:
+            # Fehler sichtbar machen (während der Entwicklung)
+            print(f"[WebSocketHandler] emit error: {e}")
+            self.handleError(record)
 
 #
 # Logger-Setup-Funktion
