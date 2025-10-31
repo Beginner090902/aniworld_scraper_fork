@@ -14,8 +14,7 @@ logging.addLevelName(LOADING, "LOADING")
 logging.addLevelName(SUCCESS, "SUCCESS")
 
 
-if not os.path.exists("logs"):
-    os.mkdir("logs")
+os.makedirs("logs", exist_ok=True)
 
 
 def loading(self, message, *args, **kwargs):
@@ -175,10 +174,16 @@ def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
     console_handler.setFormatter(ColoredFormatter())
 
     # WebSocket (ohne Farben)
+    # WebSocket (ohne Farben)
     websocket_handler = WebSocketHandler()
     websocket_handler.setLevel(level)
     websocket_handler.setFormatter(PlainFormatter())
-
+    
+    if socketio is None:
+        logger.warning(
+            "WebSocket logging handler added but socketio not initialized. "
+            "Call init_logger_socketio() to enable WebSocket log delivery."
+        )
     logger.addHandler(console_handler)
     logger.addHandler(websocket_handler)
 

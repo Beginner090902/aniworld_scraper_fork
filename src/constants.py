@@ -6,7 +6,7 @@ from src.custom_logging import setup_logger
 logger = setup_logger(__name__)
 
 def check_for_old_parse():
-    print(sys.argv)
+    logger.debug(f"sys.argv: {sys.argv}")
     if len(sys.argv) <= 1:
         return True
     elif sys.argv[1] == "serie" or sys.argv[1] == "anime":

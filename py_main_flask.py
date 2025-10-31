@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template, make_response, Response, stream_with_context, redirect, url_for, flash
+import json
 import subprocess
 import threading
 import os
@@ -175,10 +176,16 @@ def run_download_script(sanitized_data):
         for line in iter(process.stdout.readline, ''):
             if line is None:
                 break
-            text = line.rstrip('\n')
-            if text.strip():
-                logger.info(f"[PY_MAIN] {text}")
-                broadcast_log(text, level='INFO')
+            text = line.rstrip('\n').strip()
+            if not text:
+                continue  # leere Zeilen überspringen
+
+            # Wenn Zeile nur "[PY_MAIN]" enthält -> überspringen
+            if text == "[PY_MAIN]" or text.startswith("[PY_MAIN]") and len(text) < 15:
+                continue
+
+            logger.info(f"[PY_MAIN] {text}")
+            broadcast_log(text)
 
         # warten
         returncode = process.wait()
@@ -322,8 +329,9 @@ def stop_current_process():
     
 @socketio.on('connect')
 def on_connect():
-    print("Client connected", request.sid)
-    socketio.emit('log_output', {'data': '🔥 Test: Verbindung erfolgreich', 'level': 'INFO'})
+    logger.info(f"Client connected: {request.sid}")
+    if app.debug:
+        socketio.emit('log_output', {'data': 'Connected to server', 'level': 'INFO'})
 
 
 if __name__ == '__main__':
