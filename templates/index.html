@@ -12,10 +12,10 @@
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <a href="#" class="logo">Media Downloader</a>
+                <h1>Media Downloader</h1>
                 <nav>
                     <ul class="nav-menu">
-                        <li><a href="#">Einstellungen</a></li>
+                        <li><a href="/settings">Settings</a></li>
                     </ul>
                 </nav>
             </div>
@@ -26,28 +26,6 @@
         <div class="container">
             <h1>Download Konfiguration</h1>
             <p class="description">Konfiguriere deinen Media-Download mit den folgenden Einstellungen.</p>
-            <!-- Live Log Viewer -->
-            <div class="card mb-4">
-                <div class="card-header terminal-header">
-                    <h3>📋 Live Logs</h3>
-                    <div class="terminal-controls">
-                        <button class="btn btn-small" id="clearLogs">🗑️ Löschen</button>
-                        <button class="btn btn-small" id="toggleLogs">📋 Umschalten</button>
-                        <span class="log-level-filter">
-                            <label><input type="checkbox" name="loglevel" value="INFO" checked> INFO</label>
-                            <label><input type="checkbox" name="loglevel" value="WARNING" checked> WARN</label>
-                            <label><input type="checkbox" name="loglevel" value="ERROR" checked> ERROR</label>
-                        </span>
-                    </div>
-                </div>
-                <div class="terminal-container">
-                    <pre id="logOutput" class="terminal-output">Verbinde mit Log-Server...</pre>
-                </div>
-                <div class="terminal-status">
-                    <span class="status-indicator" id="logStatus">● Verbinde...</span>
-                    <span id="logCount">0 Logs</span>
-                </div>
-            </div>
 
             <form method="POST" action="{{ url_for('index') }}">
                 <!-- Erste Reihe mit 3 Boxen -->

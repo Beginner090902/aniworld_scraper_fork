@@ -20,7 +20,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 init_logger_socketio(socketio)
 
 # Logger für diese App erstellen
-logger = setup_logger('flask_app')
+logger = setup_logger('flask_logger')
+formatter = logging.Formatter('%(message)s')
 
 # --- SSE subscriber-Verwaltung ---
 _subscribers = []
@@ -184,7 +185,7 @@ def run_download_script(sanitized_data):
             if text == "[PY_MAIN]" or text.startswith("[PY_MAIN]") and len(text) < 15:
                 continue
 
-            logger.info(f"[PY_MAIN] {text}")
+            logger.info(f"{text}")
             broadcast_log(text)
 
         # warten
@@ -238,6 +239,9 @@ def index():
         return redirect(url_for('index'))
 
 
+@app.route('/settings', methods=['GET'])
+def settings():
+    return make_response(render_template('settings.html'))
 
 @app.route('/log_stream')
 def log_stream():

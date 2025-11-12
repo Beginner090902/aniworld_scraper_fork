@@ -2,6 +2,7 @@ import sys
 import re
 
 from src.custom_logging import setup_logger
+from src.r_w_file_handler import read_config_variable
 
 logger = setup_logger(__name__)
 
@@ -68,13 +69,13 @@ language = parse_cli_arguments("Deutsch", 3) if use_old_parse else get_arg("LANG
 dlMode = parse_cli_arguments("Series", 4) if use_old_parse else get_arg("MODE", "Series")  # Options: Movies, Series, All
 season_override = parse_cli_arguments(2, 5) if use_old_parse else get_arg("SEASON", 0)  # 0 = no override. 1 = season 1. etc...
 cliProvider = parse_cli_arguments("VOE", 6) if use_old_parse else get_arg("PROVIDER", "VOE")  # 0 = no override. 1 = season 1. etc...
-episode_override = 0  # 0 = no override. 1 = episode 1. etc...
-ddos_protection_calc = 2
-ddos_wait_timer = 200  # in seconds
-max_download_threads = 1 # This does NOT limit the threads but won't start more when the DDOS Timer starts.
-thread_download_wait_timer = 90  # in seconds
-disable_thread_timer = False # If true the script will start downloads as soon as the ddos protection is over.
-output_root = "output"
+episode_override = read_config_variable("episode_override")  # 0 = no override. 1 = episode 1. etc...
+ddos_protection_calc = read_config_variable("ddos_protection_calc")
+ddos_wait_timer = read_config_variable("ddos_wait_timer")  # in seconds
+max_download_threads = read_config_variable("max_download_threads") # This does NOT limit the threads but won't start more when the DDOS Timer starts.
+thread_download_wait_timer = read_config_variable("thread_download_wait_timer")  # in seconds
+disable_thread_timer = read_config_variable("disable_thread_timer") # If true the script will start downloads as soon as the ddos protection is over.
+output_root = read_config_variable("output_root")
 output_name = name
 output_path = f"{output_root}/{type_of_media}/{output_name}"
 site_url = {
