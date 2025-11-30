@@ -1,11 +1,8 @@
-# ARCHIVED PROJECT NOTICE
+# This Is My Fork
 
-⚠️ This project is no longer maintained.
-Why?
-
-I haven't watched a anime in more then a year and couldn’t find a maintainable way to rebuild this project with a cleaner codebase.
-
-If you find anything useful here, feel free to use it in your own projects.
+This is my fork — the original code remains mostly untouched.  
+I’ve added a web interface using Flask, 
+and I’m working on a Docker image for your NAS so that you can access it through a web browser.
 
 # Anime/Series Scraper
 

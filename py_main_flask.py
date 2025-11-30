@@ -9,6 +9,7 @@ import time
 from flask_socketio import SocketIO, emit
 import logging
 from src.custom_logging import init_logger_socketio, setup_logger
+from src.r_w_file_handler import read_config_variable, update_config_variable
 
 import queue  # neu: für SSE-subscriber Queues
 
@@ -239,9 +240,25 @@ def index():
         return redirect(url_for('index'))
 
 
-@app.route('/settings', methods=['GET'])
+@app.route('/settings', methods=['GET', 'POST'])
 def settings():
-    return make_response(render_template('settings.html'))
+    if request.method == 'POST':
+        # Werte aus dem Formular lesen
+        for var in ["ddos_protection_calc", "ddos_wait_timer", "max_download_threads",
+                    "thread_download_wait_timer", "disable_thread_timer" , "output_root"]:
+            if var in request.form:
+                value = request.form[var]
+                update_config_variable(var, value)
+        flash("Einstellungen erfolgreich gespeichert", "success")
+        return redirect(url_for('settings'))
+
+    # GET: aktuelle Werte auslesen
+    config = {}
+    for var in ["ddos_protection_calc", "ddos_wait_timer", "max_download_threads",
+                "thread_download_wait_timer", "disable_thread_timer" , "output_root"]:
+        config[var] = read_config_variable(var, default="")
+
+    return render_template('settings.html', config=config)
 
 @app.route('/log_stream')
 def log_stream():

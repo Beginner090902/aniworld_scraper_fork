@@ -1,7 +1,6 @@
-episode_override=2
 ddos_protection_calc=2
-ddos_wait_timer=200 
-max_download_threads=1 
-thread_download_wait_timer=90 
-disable_thread_timer=False 
+ddos_wait_timer=200
+max_download_threads=1
+thread_download_wait_timer=90
+disable_thread_timer=False
 output_root=output
