@@ -3,6 +3,12 @@
 This is my fork — the original code remains mostly untouched.  
 I’ve added a web interface using Flask, 
 and I’m working on a Docker image for your NAS so that you can access it through a web browser.
+The Docker Image is not Ready but you can get it her.
+
+```bash
+beginner090902/aniworld_scraper_fork
+```
+The last thing missing ist to chose the output folder and small settings.
 
 # Anime/Series Scraper
 
