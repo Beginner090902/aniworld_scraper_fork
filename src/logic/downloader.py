@@ -14,8 +14,35 @@ from src.successes import append_success
 logger = setup_logger(__name__)
 
 
-def already_downloaded(file_name):
+def normalize_filename(filename):
+    """Normalize filename by removing hyphens and spaces for comparison purposes."""
+    return filename.replace("-", "").replace(" ", "")
+
+
+def find_file_ignore_hyphens(file_name):
+    """Check if file exists, also checking for variations without hyphens."""
+    # First check exact match
     if os.path.exists(file_name) and os.path.getsize(file_name) > 0:
+        return True
+    
+    # Check directory-based variations (for folder structure)
+    dir_name = os.path.dirname(file_name)
+    base_name = os.path.basename(file_name)
+    
+    if os.path.exists(dir_name):
+        # Normalize the base filename for comparison
+        normalized_base = normalize_filename(base_name)
+        for existing_file in os.listdir(dir_name):
+            if normalize_filename(existing_file) == normalized_base:
+                full_path = os.path.join(dir_name, existing_file)
+                if os.path.getsize(full_path) > 0:
+                    return True
+    
+    return False
+
+
+def already_downloaded(file_name):
+    if find_file_ignore_hyphens(file_name):
         logger.info("Episode {} already downloaded.".format(file_name))
         return True
     logger.debug("File not downloaded. Downloading: {}".format(file_name))

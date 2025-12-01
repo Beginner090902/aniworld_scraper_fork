@@ -10,13 +10,44 @@ from src.constants import (APP_VERSION, ddos_protection_calc, ddos_wait_timer,
                            thread_download_wait_timer, max_download_threads, disable_thread_timer)
 from src.custom_logging import setup_logger
 from src.logic.collect_all_seasons_and_episodes import get_episodes, get_season, get_movies
-from src.logic.downloader import already_downloaded, create_new_download_thread
+from src.logic.downloader import already_downloaded, create_new_download_thread, normalize_filename
 from src.logic.language import LanguageError
 from src.logic.search_for_links import (find_cache_url, get_redirect_link_by_provider, get_year)
 from src.failures import write_fails
 from src.successes import write_success
 
 logger = setup_logger(__name__)
+
+def find_existing_folder_by_normalized_name(parent_path, target_name, year):
+    """
+    Find an existing folder with the same normalized name.
+    Prefers folders with spaces over folders with hyphens (new format over old).
+    Returns the path if found, otherwise returns the new expected path.
+    """
+    if not os.path.exists(parent_path):
+        return f"{parent_path}/{target_name} ({year})"
+    
+    target_normalized = normalize_filename(target_name)
+    matches = []
+    
+    for existing_folder in os.listdir(parent_path):
+        if existing_folder.endswith(f" ({year})"):
+            folder_name = existing_folder.replace(f" ({year})", "")
+            if normalize_filename(folder_name) == target_normalized:
+                full_path = os.path.join(parent_path, existing_folder)
+                # Track whether this uses spaces (new format) or hyphens (old format)
+                uses_spaces = " " in folder_name and "-" not in folder_name
+                matches.append((full_path, existing_folder, uses_spaces))
+    
+    if matches:
+        # Prefer new format (with spaces) over old format (with hyphens)
+        matches.sort(key=lambda x: x[2], reverse=True)
+        best_match = matches[0]
+        logger.info(f"Found existing folder: {best_match[1]}")
+        return best_match[0]
+    
+    # If no existing folder found, return the new path
+    return f"{parent_path}/{target_name} ({year})"
 
 def is_ffmpeg_installed():
     # Attempt to execute ffmpeg
@@ -84,7 +115,9 @@ def main():
             seasons = 1
 
     year = get_year(url)
-    output_path = f"{output_root}/{type_of_media}/{output_name} ({year})"
+    media_path = f"{output_root}/{type_of_media}"
+    os.makedirs(media_path, exist_ok=True)
+    output_path = find_existing_folder_by_normalized_name(media_path, output_name, year)
     os.makedirs(output_path, exist_ok=True)
 
     threadpool = []

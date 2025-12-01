@@ -55,6 +55,10 @@ arguments = args_parse() if use_old_parse == False else {}
 def get_arg(name: str, default: str | int = None):
     return arguments.get(name, default)
 
+def normalize_name_for_folder(name_str):
+    """Replace hyphens with spaces for folder structure."""
+    return name_str.replace("-", " ")
+
 # ------------------------------------------------------- #
 #                   definitions
 # ------------------------------------------------------- #
@@ -76,7 +80,7 @@ max_download_threads = read_config_variable("max_download_threads") # This does 
 thread_download_wait_timer = read_config_variable("thread_download_wait_timer")  # in seconds
 disable_thread_timer = read_config_variable("disable_thread_timer") # If true the script will start downloads as soon as the ddos protection is over.
 output_root = read_config_variable("output_root")
-output_name = name
+output_name = normalize_name_for_folder(name)
 output_path = f"{output_root}/{type_of_media}/{output_name}"
 site_url = {
     "serie": "https://s.to",  # maybe you need another dns to be able to use this site
