@@ -5,3 +5,11 @@
 .logline.critical { color: #C0392B; }
 .logline.loading { color: #9B59B6; }
 .logline.success { color: #2ECC71; }
+
+#logWindow {
+    height: 60vh;
+    overflow: auto;
+    background: #000;
+    color: #eee;
+    padding: 1rem;
+}

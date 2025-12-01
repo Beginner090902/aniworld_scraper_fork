@@ -95,7 +95,7 @@ def _sanitize_name(name, max_length=200):
 
 def validate_and_sanitize_form(form):
     allowed_types = {'anime': 'anime', 'serie': 'serie'}
-    allowed_langs = {'deutsch': 'Deutsch', 'english': 'English' , 'Ger-Sub': 'ger-sub'}
+    allowed_langs = {'deutsch': 'Deutsch', 'english': 'English' , 'ger-sub': 'ger-sub'}
     allowed_modes = {'series': 'Series', 'movie': 'Movie' , 'all': 'All'}
     allowed_providers = {'voe': 'VOE', 'streamtape': 'Streamtape', 'vidoza': 'Vidoza'}
     allowed_season_overrides = {str(i) for i in range(0, 11)} | {f"{i}+" for i in range(1, 11)}
@@ -112,26 +112,28 @@ def validate_and_sanitize_form(form):
         media_type = allowed_types[t]
     else:
         logger.warning(f"Unbekannter Medientyp '{raw_type}'")
-
+        media_type = 'anime'  # default
 
     l = str(raw_lang).strip().lower()
     if l in allowed_langs:
         language = allowed_langs[l]
     else:
         logger.warning(f"Unbekannte Sprache '{raw_lang}'")
+        language = 'Deutsch'  # default
 
     m = str(raw_mode).strip().lower()
     if m in allowed_modes:
         dl_mode = allowed_modes[m]
     else:
         logger.warning(f"Unbekannter Download-Modus '{raw_mode}'")
-
+        dl_mode = 'Series'  # default
 
     p = str(raw_provider).strip().lower()
     if p in allowed_providers:
         provider = allowed_providers[p]
     else:
         logger.warning(f"Unbekannter Anbieter '{raw_provider}'")
+        provider = 'VOE'  # default
 
     so = str(raw_season_override).strip().lower()
     if so in allowed_season_overrides:
@@ -141,7 +143,7 @@ def validate_and_sanitize_form(form):
             season_override = so
     else:
         logger.warning(f"Unbekannter Season Override '{raw_season_override}'")
-
+        season_override = ''  # default
 
 
     try:
@@ -211,7 +213,7 @@ def run_download_script(sanitized_data):
                 continue  # leere Zeilen überspringen
 
             # Wenn Zeile nur "[PY_MAIN]" enthält -> überspringen
-            if text == "[PY_MAIN]" or text.startswith("[PY_MAIN]") and len(text) < 15:
+            if text == "[PY_MAIN]" or (text.startswith("[PY_MAIN]") and len(text) < 15):
                 continue
 
             logger.info(f"{text}")
@@ -384,5 +386,7 @@ def on_connect():
 
 
 if __name__ == '__main__':
-    socketio.run(app, host='127.0.0.1', port=5000, debug=False)
+    host = os.environ.get('FLASK_HOST', '0.0.0.0')
+    port = int(os.environ.get('FLASK_PORT', 5000))
+    socketio.run(app, host=host, port=port, debug=False)
 

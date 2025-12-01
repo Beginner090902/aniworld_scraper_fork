@@ -84,7 +84,7 @@ def main():
             seasons = 1
 
     year = get_year(url)
-    output_path = f"{output_root}/{type_of_media}/{output_name}_({year})"
+    output_path = f"{output_root}/{type_of_media}/{output_name} ({year})"
     os.makedirs(output_path, exist_ok=True)
 
     threadpool = []
