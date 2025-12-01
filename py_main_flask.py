@@ -163,11 +163,11 @@ def validate_and_sanitize_form(form):
 
 
 # globales Tracking
-current_process = None
+active_processes = []
 current_process_lock = threading.Lock()
 
 def run_download_script(sanitized_data):
-    global current_process
+    global active_processes
     try:
         cmd = [
             'python3', 'py_main.py',
@@ -200,9 +200,9 @@ def run_download_script(sanitized_data):
 
         process = subprocess.Popen(cmd, **popen_kwargs)
 
-        # setze globalen current_process (thread-sicher)
+        # füge zum list der aktiven prozesse hinzu (thread-sicher)
         with current_process_lock:
-            current_process = process
+            active_processes.append(process)
 
         # Live-Output lesen
         for line in iter(process.stdout.readline, ''):
@@ -235,14 +235,13 @@ def run_download_script(sanitized_data):
         broadcast_log(f"❌ Fehler beim Download: {str(e)}")
 
     finally:
-        # clear current process
+        # entferne prozess aus liste (thread-sicher)
         with current_process_lock:
-            # falls process wurde ersetzt/ausserhalb verändert, nur clear wenn identisch
             try:
-                if current_process is process:
-                    current_process = None
-            except NameError:
-                current_process = None
+                if process in active_processes:
+                    active_processes.remove(process)
+            except (NameError, ValueError):
+                pass
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -317,65 +316,76 @@ def log_stream():
 
 @app.route('/stop', methods=['POST'])
 def stop_current_process():
-    """Versucht das aktuell laufende Programm zu stoppen."""
-    global current_process
+    """Versucht alle laufenden Download-Prozesse zu stoppen."""
+    global active_processes
+    
     with current_process_lock:
-        p = current_process
+        processes_to_stop = list(active_processes)
 
-    if p is None or p.poll() is not None:
+    if not processes_to_stop:
         # kein laufender Prozess
         return jsonify({'status': 'no_process', 'message': 'Kein laufender Prozess'}), 400
 
     try:
-        broadcast_log("⏹ Stop-Anfrage erhalten. Stoppe Prozess...")
-        logger.info("Stop-Anfrage erhalten. Stoppe Prozess...")
+        stopped_count = 0
+        broadcast_log(f"⏹ Stop-Anfrage erhalten. Stoppe {len(processes_to_stop)} Prozess(e)...")
+        logger.info(f"Stop-Anfrage erhalten. Stoppe {len(processes_to_stop)} Prozess(e)...")
 
-        # Versuche sauberes Signal
-        if os.name == 'nt':
+        for p in processes_to_stop:
+            if p.poll() is not None:
+                # Prozess bereits beendet
+                continue
+
             try:
-                # send CTRL_BREAK to the process group (works when created with CREATE_NEW_PROCESS_GROUP)
-                p.send_signal(signal.CTRL_BREAK_EVENT)
-            except Exception:
+                # Versuche sauberes Signal
+                if os.name == 'nt':
+                    try:
+                        # send CTRL_BREAK to the process group (works when created with CREATE_NEW_PROCESS_GROUP)
+                        p.send_signal(signal.CTRL_BREAK_EVENT)
+                    except Exception:
+                        try:
+                            p.terminate()
+                        except Exception:
+                            pass
+                else:
+                    try:
+                        # send SIGINT to process group
+                        os.killpg(os.getpgid(p.pid), signal.SIGINT)
+                    except Exception:
+                        try:
+                            p.terminate()
+                        except Exception:
+                            pass
+
+                # Warte kurz auf beendigung
                 try:
-                    p.terminate()
+                    p.wait(timeout=5)
                 except Exception:
-                    pass
-        else:
-            try:
-                # send SIGINT to process group
-                os.killpg(os.getpgid(p.pid), signal.SIGINT)
-            except Exception:
-                try:
-                    p.terminate()
-                except Exception:
-                    pass
+                    # falls noch alive -> kill
+                    try:
+                        p.kill()
+                    except Exception:
+                        pass
+                    try:
+                        p.wait(timeout=2)
+                    except Exception:
+                        pass
+                
+                stopped_count += 1
+            except Exception as e:
+                logger.warning(f"Fehler beim Stoppen eines Prozesses: {str(e)}")
 
-        # Warte kurz auf beendigung
-        try:
-            p.wait(timeout=5)
-        except Exception:
-            # falls noch alive -> kill
-            try:
-                p.kill()
-            except Exception:
-                pass
-            try:
-                p.wait(timeout=2)
-            except Exception:
-                pass
+        broadcast_log(f"⏹ {stopped_count} Prozess(e) gestoppt")
+        logger.info(f"{stopped_count} Prozess(e) gestoppt")
 
-        broadcast_log("⏹ Prozess gestoppt")
-        logger.info("Prozess gestoppt")
-
-        # sicherheitshalber clearen
+        # Leere die Liste der aktiven Prozesse
         with current_process_lock:
-            if current_process is p:
-                current_process = None
+            active_processes.clear()
 
-        return jsonify({'status': 'stopped', 'message': 'Prozess gestoppt'}), 200
+        return jsonify({'status': 'stopped', 'message': f'{stopped_count} Prozess(e) gestoppt'}), 200
 
     except Exception as e:
-        logger.exception("Fehler beim Stoppen des Prozesses")
+        logger.exception("Fehler beim Stoppen der Prozesse")
         return jsonify({'status': 'error', 'message': str(e)}), 500
     
 @socketio.on('connect')
