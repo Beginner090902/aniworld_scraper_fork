@@ -94,31 +94,55 @@ def _sanitize_name(name, max_length=200):
 
 
 def validate_and_sanitize_form(form):
-    allowed_types = {'anime': 'anime', 'movie': 'movie', 'series': 'series'}
-    allowed_langs = {'deutsch': 'Deutsch', 'english': 'English', 'japanese': 'Japanese'}
-    allowed_modes = {'series': 'Series', 'movie': 'Movie'}
+    allowed_types = {'anime': 'anime', 'serie': 'serie'}
+    allowed_langs = {'deutsch': 'Deutsch', 'english': 'English' , 'Ger-Sub': 'ger-sub'}
+    allowed_modes = {'series': 'Series', 'movie': 'Movie' , 'all': 'All'}
     allowed_providers = {'voe': 'VOE', 'streamtape': 'Streamtape', 'vidoza': 'Vidoza'}
+    allowed_season_overrides = {str(i) for i in range(0, 11)} | {f"{i}+" for i in range(1, 11)}
 
     raw_type = form.get('type_of_media', '')
     raw_name = form.get('name', '')
     raw_lang = form.get('language', '')
     raw_mode = form.get('dlMode', '')
     raw_provider = form.get('cliProvider', '')
+    raw_season_override = form.get('season_override', '0')
 
     t = str(raw_type).strip().lower()
     if t in allowed_types:
         media_type = allowed_types[t]
     else:
-        media_type = 'anime'
+        logger.warning(f"Unbekannter Medientyp '{raw_type}'")
+
 
     l = str(raw_lang).strip().lower()
-    language = allowed_langs.get(l, 'Deutsch')
+    if l in allowed_langs:
+        language = allowed_langs[l]
+    else:
+        logger.warning(f"Unbekannte Sprache '{raw_lang}'")
 
     m = str(raw_mode).strip().lower()
-    dl_mode = allowed_modes.get(m, 'Series')
+    if m in allowed_modes:
+        dl_mode = allowed_modes[m]
+    else:
+        logger.warning(f"Unbekannter Download-Modus '{raw_mode}'")
+
 
     p = str(raw_provider).strip().lower()
-    provider = allowed_providers.get(p, 'VOE')
+    if p in allowed_providers:
+        provider = allowed_providers[p]
+    else:
+        logger.warning(f"Unbekannter Anbieter '{raw_provider}'")
+
+    so = str(raw_season_override).strip().lower()
+    if so in allowed_season_overrides:
+        if so == '0':
+            season_override = ''
+        else:
+            season_override = so
+    else:
+        logger.warning(f"Unbekannter Season Override '{raw_season_override}'")
+
+
 
     try:
         name = _sanitize_name(str(raw_name))
@@ -131,6 +155,8 @@ def validate_and_sanitize_form(form):
         'language': language,
         'dlMode': dl_mode,
         'cliProvider': provider,
+        'season_override': season_override,
+
     }
 
 
@@ -147,7 +173,9 @@ def run_download_script(sanitized_data):
             '--name', str(sanitized_data.get('name', 'Name-Goes-Here')),
             '--lang', str(sanitized_data.get('language', 'Deutsch')),
             '--dl-mode', str(sanitized_data.get('dlMode', 'Series')),
-            '--provider', str(sanitized_data.get('cliProvider', 'VOE'))
+            '--provider', str(sanitized_data.get('cliProvider', 'VOE')),
+            '--season-override', str(sanitized_data.get('season_override', '0')),
+            '--episode-override', str(sanitized_data.get('episode_override', '0'))
         ]
 
         logger.info(f"🔧 Starte Download: {' '.join(cmd)}")
@@ -245,7 +273,7 @@ def settings():
     if request.method == 'POST':
         # Werte aus dem Formular lesen
         for var in ["ddos_protection_calc", "ddos_wait_timer", "max_download_threads",
-                    "thread_download_wait_timer", "disable_thread_timer" , "output_root"]:
+                    "thread_download_wait_timer", "disable_thread_timer" , "output_root", "episode_override"]:
             if var in request.form:
                 value = request.form[var]
                 update_config_variable(var, value)
@@ -255,7 +283,7 @@ def settings():
     # GET: aktuelle Werte auslesen
     config = {}
     for var in ["ddos_protection_calc", "ddos_wait_timer", "max_download_threads",
-                "thread_download_wait_timer", "disable_thread_timer" , "output_root"]:
+                "thread_download_wait_timer", "disable_thread_timer" , "output_root", "episode_override"]:
         config[var] = read_config_variable(var, default="")
 
     return render_template('settings.html', config=config)

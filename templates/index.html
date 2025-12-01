@@ -123,22 +123,59 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
+                <div class="config-row">
                     <div class="card">
                         <div class="card-header">
-                            <h3>ℹ️ Info</h3>
+                            <h3>🔗 Season Override</h3>
                         </div>
-                        <div class="info-box">
-                            <h4>Manueller Download</h4>
-                            <p>Bei Fehlern oder für spezifische Episoden, verwende das <code>Manual_download.py</code>
-                                Skript:</p>
-                            <ol>
-                                <li>Editiere <code>src/constants.py</code> und setze <code>episode_override</code></li>
-                                <li>Führe das Skript aus:
-                                    <pre>python Manual_download.py --type &lt;TYPE&gt; --name &lt;NAME&gt; --lang &lt;LANGUAGE&gt; --season-override &lt;SeasonOverride&gt;</pre>
-                                </li>
-                            </ol>
+                        <div class="form-group">
+                            <label class="form-label" for="season_override">Season Override auswählen</label>
+                            <select class="form-control" id="season_override" name="season_override">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="1+">1+</option>
+                                <option value="2">2</option>
+                                <option value="2+">2+</option>
+                                <option value="3">3</option>
+                                <option value="3+">3+</option>
+                                <option value="4">4</option>
+                                <option value="4+">4+</option>
+                                <option value="5">5</option>
+                                <option value="5+">5+</option>
+                                <option value="6">6</option>
+                                <option value="6+">6+</option>
+                                <option value="7">7</option>
+                                <option value="7+">7+</option>
+                                <option value="8">8</option>
+                                <option value="8+">8+</option>
+                                <option value="9">9</option>
+                                <option value="9+">9+</option>
+                                <option value="10">10</option>
+                                <option value="10+">10+</option>
+                            </select>
+                            <div class="help-text">
+                                <strong>Erklärung:</strong> Gib die Staffel(en) an, die heruntergeladen werden sollen (Standard: 0 für alle Staffeln). 2+ bedeutet z.B. Staffel 2 und alle folgenden Staffeln.
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>ℹ️ Info</h3>
+                    </div>
+                    <div class="info-box">
+                        <h4>Manueller Download</h4>
+                        <p>Bei Fehlern oder für spezifische Episoden, verwende das <code>Manual_download.py</code>
+                            Skript:</p>
+                        <ol>
+                            <li>Editiere <code>src/constants.py</code> und setze <code>episode_override</code></li>
+                            <li>Führe das Skript aus:
+                                <pre>python Manual_download.py --type &lt;TYPE&gt; --name &lt;NAME&gt; --lang &lt;LANGUAGE&gt; --season-override &lt;SeasonOverride&gt;</pre>
+                            </li>
+                        </ol>
                     </div>
                 </div>
 
