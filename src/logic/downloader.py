@@ -32,11 +32,19 @@ def find_file_ignore_hyphens(file_name):
     if os.path.exists(dir_name):
         # Normalize the base filename for comparison
         normalized_base = normalize_filename(base_name)
-        for existing_file in os.listdir(dir_name):
-            if normalize_filename(existing_file) == normalized_base:
-                full_path = os.path.join(dir_name, existing_file)
-                if os.path.getsize(full_path) > 0:
-                    return True
+        try:
+            for existing_file in os.listdir(dir_name):
+                if normalize_filename(existing_file) == normalized_base:
+                    full_path = os.path.join(dir_name, existing_file)
+                    try:
+                        if os.path.getsize(full_path) > 0:
+                            return True
+                    except OSError:
+                        # File may have been deleted between listdir and getsize
+                        continue
+        except (PermissionError, FileNotFoundError, OSError) as e:
+            logger.debug(f"Could not access directory {dir_name}: {e}")
+            return False
     
     return False
 
