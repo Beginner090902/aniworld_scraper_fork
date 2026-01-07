@@ -158,9 +158,9 @@ def main():
             for episode in range(int(episode_count_movies)):
                 episode = episode + 1
                 file_name_mkv = "{}/{}-{}.mkv".format(season_path_movies, name, episode)
-                file_name_mp4 = "{}/{}-{}.mp4".format(season_path_movies, name, episode)
-                logger.info("File name will be: " + file_name_mp4)
-                if not already_downloaded(file_name_mp4) or not already_downloaded(file_name_mkv):
+                file_name = "{}/{}-{}.mp4".format(season_path_movies, name, episode)
+                logger.info("File name will be: " + file_name)
+                if not already_downloaded(file_name) or not already_downloaded(file_name_mkv):
                     link = url + "filme/film-{}".format(episode)
                     try:
                         redirect_link, provider, lang_key = get_redirect_link_by_provider(site_url[type_of_media], link, language, cliProvider)
@@ -184,8 +184,8 @@ def main():
             for episode in range(int(episode_count_series)):
                 episode = episode + 1
                 file_name_mkv = "{}/{} - s{:02}e{:02} - {}.mkv".format(season_path_series, name, season, episode, language)
-                file_name_mp4 = "{}/{} - s{:02}e{:02} - {}.mp4".format(season_path_series, name, season, episode, language)
-                if not already_downloaded(file_name_mp4) or not already_downloaded(file_name_mkv):
+                file_name = "{}/{} - s{:02}e{:02} - {}.mp4".format(season_path_series, name, season, episode, language)
+                if not already_downloaded(file_name) or not already_downloaded(file_name_mkv):
                     link = url + "staffel-{}/episode-{}".format(season, episode)
                     try:
                         redirect_link, provider, lang_key = get_redirect_link_by_provider(site_url[type_of_media], link, language, cliProvider)
@@ -213,9 +213,9 @@ def main():
         else:
             for episode in range(int(episode_count_movies)):
                 episode = episode + 1
-                file_name_mp4 = "{}/{}-{}.mp4".format(season_path_movies, name, episode)
+                file_name = "{}/{}-{}.mp4".format(season_path_movies, name, episode)
                 file_name_mkv = "{}/{}-{}.mkv".format(season_path_movies, name, episode)
-                if not already_downloaded(file_name_mp4) or not already_downloaded(file_name_mkv):
+                if not already_downloaded(file_name) or not already_downloaded(file_name_mkv):
                     link = url + "filme/film-{}".format(episode)
                     try:
                         redirect_link, provider, lang_key = get_redirect_link_by_provider(site_url[type_of_media], link, language, cliProvider)
@@ -243,8 +243,8 @@ def main():
             for episode in range(int(episode_count_series)):
                 episode = episode + 1
                 file_name_mkv = "{}/{} - s{:02}e{:02} - {}.mkv".format(season_path_series, name, season, episode, language)
-                file_name_mp4 = "{}/{} - s{:02}e{:02} - {}.mp4".format(season_path_series, name, season, episode, language)
-                if not already_downloaded(file_name_mp4) or not already_downloaded(file_name_mkv):
+                file_name = "{}/{} - s{:02}e{:02} - {}.mp4".format(season_path_series, name, season, episode, language)
+                if not already_downloaded(file_name) or not already_downloaded(file_name_mkv):
                     link = url + "staffel-{}/episode-{}".format(season, episode)
                     try:
                         redirect_link, provider, lang_key = get_redirect_link_by_provider(site_url[type_of_media], link, language, cliProvider)
