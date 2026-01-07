@@ -15,11 +15,15 @@ import queue  # neu: für SSE-subscriber Queues
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-for-local')  # für Produktion: echte geheime Variable
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
 
-# Logger mit WebSocket initialisieren
-init_logger_socketio(socketio)
-
+try:
+    # Logger mit WebSocket initialisieren
+    init_logger_socketio(socketio)
+    print("✅ Logger mit SocketIO initialisiert")
+except Exception as e:
+    print(f"❌ Fehler bei der Logger-Initialisierung mit SocketIO: {str(e)}")
+    
 # Logger für diese App erstellen
 logger = setup_logger('flask_logger')
 formatter = logging.Formatter('%(message)s')
@@ -27,6 +31,8 @@ formatter = logging.Formatter('%(message)s')
 # --- SSE subscriber-Verwaltung ---
 _subscribers = []
 _sub_lock = threading.Lock()
+
+
 
 def subscribe():
     """Erzeuge eine neue Queue für einen neuen SSE-Client und füge sie zur Liste hinzu."""
