@@ -50,6 +50,7 @@ def find_file_ignore_hyphens(file_name):
 
 
 def already_downloaded(file_name):
+    logger.info("Checking if file is already downloaded: {}".format(file_name))
     if find_file_ignore_hyphens(file_name):
         logger.info("Episode {} already downloaded.".format(file_name))
         return True
