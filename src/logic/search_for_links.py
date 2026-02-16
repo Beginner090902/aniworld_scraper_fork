@@ -169,23 +169,46 @@ def find_script_element_voenew(raw_html):
 # --------------------------------------------------------#
 
 def get_year(url):
-    """
-    Get the year of the show.
-
-    Parameters:
-        url (String): url of the show.
-
-    Returns:
-        year (String): year of the show.
-    """
     try:
         html_page = urllib.request.urlopen(url)
         soup = BeautifulSoup(html_page, features="html.parser")
-        year = soup.find("span", {"itemprop": "startDate"}).text
-        return year
-    except AttributeError:
-        logger.error("Could not find year of the show.")
-        return 0
+        year = None
+        
+        # Version 1: Alte Struktur mit itemprop
+        year_old = soup.find("span", {"itemprop": "startDate"})
+        if year_old:
+            year = year_old.text.strip()
+            print("Alte Struktur gefunden")
+            
+        # Version 2: Neue Struktur
+        if not year:
+            year_element = soup.find("p", class_="small text-muted mb-2")
+            if year_element:
+                year_link = year_element.find("a")
+                if year_link:
+                    year = year_link.text.strip()
+                    print("Neue Struktur gefunden")
+        
+        # Version 3: Alternative Suche in der neuen Struktur
+        if not year:
+            year_element = soup.find("div", class_="col-12 col-md-9 col-lg-10")
+            if year_element:
+                year_link = year_element.find("a", class_="small text-muted")
+                if year_link:
+                    year = year_link.text.strip()
+                    print("Alternative neue Struktur gefunden")
+        
+        if year:
+            print(f"Jahr: {year}")
+            return year
+        else:
+            print("Kein Jahr gefunden")
+            return None
+            
+    except Exception as e:
+        print(f"Fehler: {e}")
+        return None
+    
 
 
 def get_redirect_link_by_provider(site_url, internal_link, language, provider):
