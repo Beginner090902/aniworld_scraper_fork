@@ -31,6 +31,7 @@ def main():
         exit()
     site_url = {"serie": "https://s.to", "anime": "https://aniworld.to"}
 
+
     year = get_year(url)
     output_path = f"{output_root}/{type_of_media}/{output_name}_({year})"
     os.makedirs(output_path, exist_ok=True)

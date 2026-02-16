@@ -116,6 +116,7 @@ def main():
             logger.info("Season Override detected. Override set to: {}".format(season_override))
             seasons = 1
 
+
     year = get_year(url)
     media_path = f"{output_root}/{type_of_media}"
     os.makedirs(media_path, exist_ok=True)

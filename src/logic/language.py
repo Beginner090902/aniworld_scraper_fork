@@ -35,16 +35,53 @@ def restructure_dict(given_dict):
 
 def extract_lang_key_mapping(soup):
     lang_key_mapping = {}
-    # Find the div with class "changeLanguageBox"
+    
+    # Version 1: Alte Struktur mit changeLanguageBox
     change_language_div = soup.find("div", class_="changeLanguageBox")
     if change_language_div:
-        # Find all img tags inside the div to extract language and data-lang-key
         lang_elements = change_language_div.find_all("img")
         for lang_element in lang_elements:
             language = lang_element.get("alt", "") + "," + lang_element.get("title", "")
             data_lang_key = lang_element.get("data-lang-key", "")
             if language and data_lang_key:
                 lang_key_mapping[language] = data_lang_key
+        logger.debug("Alte Struktur gefunden")
+    
+    # Version 2: Neue Struktur
+    if not lang_key_mapping:
+        # Suche nach dem h5 Element mit der Sprache
+        language_heading = soup.find("h5", class_="h6 mt-2 ms-1 text-muted")
+        if language_heading and language_heading.text.strip() == "Deutsch":
+            # Suche nach dem Button mit data-language-id
+            language_buttons = soup.find_all("button", {"data-language-id": True})
+            for button in language_buttons:
+                lang_id = button.get("data-language-id", "")
+                lang_name = button.get("data-language-label", "")
+                if lang_name and lang_id:
+                    # Erstelle einen ähnlichen Schlüssel wie in der alten Struktur
+                    language_key = f"{lang_name}, {lang_name}"
+                    lang_key_mapping[language_key] = lang_id
+            
+            # Alternative: Suche nach img mit alt/title Attributen
+            if not lang_key_mapping:
+                lang_images = soup.find_all("img", {"alt": True, "title": True})
+                for img in lang_images:
+                    if "language" in img.get("alt", "").lower() or "flagge" in img.get("title", "").lower():
+                        language = img.get("alt", "") + "," + img.get("title", "")
+                        # Versuche data-lang-key zu finden (im img oder im parent button)
+                        data_lang_key = img.get("data-lang-key", "")
+                        
+                        # Wenn nicht im img, suche im parent button
+                        if not data_lang_key:
+                            parent_button = img.find_parent("button", {"data-language-id": True})
+                            if parent_button:
+                                data_lang_key = parent_button.get("data-language-id", "")
+                        
+                        if language and data_lang_key:
+                            lang_key_mapping[language] = data_lang_key
+                
+        logger.debug("Neue Struktur gefunden" if lang_key_mapping else "Keine neue Struktur gefunden")
+    
     ret = restructure_dict(lang_key_mapping)
     logger.debug(f"Restructured language mapping: {ret}")
     return ret
