@@ -8,8 +8,20 @@ services:
       - "5002:5000"
     depends_on:
       - Aniworld
+    networks:
+      - app-network
+      
   Aniworld:
     container_name: Aniworld
-    image: beginner090902/aniworld_scraper_fork:latest
+    image: beginner090902/aniworldscraperfork:latest
     ports:
       - "5001:5000"
+    user: "1000:1000"
+    volumes:
+      - /output:/app/output
+    networks:
+      - app-network
+      
+networks:
+  app-network:
+    driver: bridge
