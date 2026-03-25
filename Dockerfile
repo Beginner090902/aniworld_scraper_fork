@@ -21,9 +21,19 @@ RUN apt-get update && \
 ENV FLASK_APP=py_main_flask.py
 ENV FLASK_DEBUG=0
 
-RUN groupadd -g 1000 appgroup \
-    && useradd -u 1000 -g appgroup -m appuser
+ARG USER_ID=1000
+ARG GROUP_ID=1000
 
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+# User mit Host-UID/GID erstellen
+RUN groupadd -g ${GROUP_ID} appgroup && \
+    useradd -u ${USER_ID} -g appgroup -m appuser
+
+# Arbeitsverzeichnisse erstellen und Berechtigungen setzen
+RUN mkdir -p /app/output && \
+    chown -R ${USER_ID}:${GROUP_ID} /app
 
 USER appuser
 
