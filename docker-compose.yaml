@@ -5,7 +5,7 @@ services:
     container_name: MM
     image: beginner090902/mediamanagerforaniscraper:latest
     ports:
-      - "5002:5000"
+      - "5002:5002"
     depends_on:
       - Aniworld
     networks:
@@ -16,7 +16,7 @@ services:
     image: beginner090902/aniworldscraperfork:latest
     ports:
       - "5001:5000"
-    user: "1000:1000"
+    user: "1000:1001"
     volumes:
       - /output:/app/output
     networks:
