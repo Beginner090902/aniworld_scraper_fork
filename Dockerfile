@@ -37,4 +37,4 @@ RUN mkdir -p /app/output && \
 
 USER appuser
 
-CMD ["python", "py_main_flask.py"]
+CMD ["gunicorn", "--worker-class", "gevent", "--bind", "0.0.0.0:5001", "py_main_flask:app"]
