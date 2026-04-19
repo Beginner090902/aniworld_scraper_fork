@@ -8,10 +8,12 @@ import signal
 import time
 from flask_socketio import SocketIO, emit
 import logging
-from src.custom_logging import init_logger_socketio, setup_logger
+from src.custom_logging import setup_logger,init_logger_socketio
 from src.r_w_file_handler import read_config_variable, update_config_variable
 
 import queue  # neu: für SSE-subscriber Queues
+
+logger = setup_logger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-for-local')  # für Produktion: echte geheime Variable
@@ -20,9 +22,9 @@ socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=
 try:
     # Logger mit WebSocket initialisieren
     init_logger_socketio(socketio)
-    print("✅ Logger mit SocketIO initialisiert")
+    logger.info("✅ Logger mit SocketIO initialisiert")
 except Exception as e:
-    print(f"❌ Fehler bei der Logger-Initialisierung mit SocketIO: {str(e)}")
+    logger.warning(f"❌ Fehler bei der Logger-Initialisierung mit SocketIO: {str(e)}")
     
 # Logger für diese App erstellen
 logger = setup_logger('flask_logger')
@@ -255,15 +257,15 @@ def index():
     if request.method == 'GET':
         return make_response(render_template('index.html'))
     elif request.method == 'POST':
-        print("=== FORMULAR DATEN EMPFANGEN ===")
+        logger.info("=== FORMULAR DATEN EMPFANGEN ===")
         for key, value in request.form.items():
-            print(f"{key}: {value}")
-        print("=================================")
+            logger.info(f"{key}: {value}")
+        logger.info("=================================")
 
         try:
             sanitized = validate_and_sanitize_form(request.form)
         except ValueError as e:
-            print(f"❌ Formular Validierungsfehler: {e}")
+            logger.info(f"❌ Formular Validierungsfehler: {e}")
             flash("Ungültige Eingabe. Bitte überprüfen Sie Ihre Daten.", "error")
             return redirect(url_for('index'))
 
@@ -402,7 +404,8 @@ def on_connect():
 
 
 if __name__ == '__main__':
-    host = os.environ.get('FLASK_HOST', '0.0.0.0')
-    port = int(os.environ.get('FLASK_PORT', 5000))
-    socketio.run(app, host=host, port=port, debug=False, allow_unsafe_werkzeug=True)
+    #host = os.environ.get('FLASK_HOST', '0.0.0.0')
+    #port = int(os.environ.get('FLASK_PORT', 5000))
+    #  host=host, port=port,
+    socketio.run(app, debug=True)
 
