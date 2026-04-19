@@ -251,7 +251,7 @@ def get_redirect_link(site_url, html_link, language, provider):
 
 def find_cache_url(url, provider):
     global cache_url_attempts
-    logger.debug("Enterd {} to cache".format(provider))
+    logger.debug("Enterd {} to cache for url {}".format(provider,url))
     try:
         html_page = urllib.request.urlopen(url)
     except URLError as e:
@@ -307,6 +307,51 @@ def find_cache_url(url, provider):
                     cache_link = base64.b64decode(cache_link).decode('utf-8')
                     if cache_link and cache_link.startswith("https://"):
                         return cache_link
+            try:
+                    headers = {
+                        "User-Agent": "Mozilla/5.0"
+                    }
+
+                    req = urllib.request.Request(url, headers=headers)
+                    response = urllib.request.urlopen(req)
+                    html = response.read().decode("utf-8")
+
+                    soup = BeautifulSoup(html, "html.parser")
+
+                    # 1. iframe holen (BESTER WEG)
+                    iframe = soup.find("iframe", {"id": "player-iframe"})
+                    if not iframe:
+                        logger.info("Kein iframe gefunden")
+                        return None
+
+                    src = iframe.get("src")
+                    full_url = urllib.parse.urljoin(url, src)
+
+                    logger.info(f"[DEBUG] iframe URL: {full_url}")
+
+                    # 2. iframe Seite laden
+                    req2 = urllib.request.Request(full_url, headers=headers)
+                    response2 = urllib.request.urlopen(req2)
+                    html2 = response2.read().decode("utf-8")
+
+                    # 3. Suche nach echten Video URLs
+                    # typische Patterns
+                    patterns = [
+                        r'https://[^"]+\.m3u8',
+                        r'https://[^"]+\.mp4'
+                    ]
+
+                    for pattern in patterns:
+                        match = re.search(pattern, html2)
+                        if match:
+                            logger.info(f"[DEBUG] Found video: {match.group(0)}")
+                            return match.group(0)
+
+                    logger.info("Kein Video-Link gefunden")
+                    return None
+            except AttributeError:
+                logger.info("Could not find cache url voe")
+
             logger.error("Could not find cache url for {}.".format(provider))
             return 0
         elif provider == "Streamtape":
